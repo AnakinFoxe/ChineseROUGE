@@ -6,44 +6,76 @@
 
 package edu.csupomona.nlp.tool;
 
+import edu.csupomona.nlp.util.ChineseSeg;
 import edu.csupomona.nlp.util.NGram;
-import edu.csupomona.nlp.util.Preprocessor;
 import edu.csupomona.nlp.util.Stopword;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- *
+ * 
  * @author Xing
  */
-public class ChineseROUGE {
+public class ChineseROUGE extends EnglishROUGE {
+    
+    ChineseSeg cs;
+    
+    public ChineseROUGE() {
+        cs = new ChineseSeg();
+        
+        try {
+            Stopword.init("stopwords_c.txt");
+        } catch (IOException ex) {
+            Logger.getLogger(ChineseROUGE.class.getName())
+                    .log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    @Override
+    protected HashMap<String, Integer> createNGram(Integer N, String path) 
+            throws FileNotFoundException, IOException {
+        // construct a n-gram processor
+        NGram ngram = new NGram(N); 
+        
+        // read model file and create model n-gram maps
+        FileReader fr = new FileReader(path);
+        BufferedReader br = new BufferedReader(fr);
+        HashMap<String, Integer> map = new HashMap<>();
+        String text;
+        List<String> words;
+        while ((text = br.readLine()) != null) {           
+            // tokenize input text
+            words = cs.toMMsegWords(text, "C");
+            
+            // remove stopwords
+            words = Stopword.rmStopword(words);
+            
+            // update n-gram
+            ngram.updateNGram(map, words);
+        }
+        
+        return map;
+    }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        HashMap<String, Integer> map = new HashMap<>();
-         
-        // init stopword
-        Stopword.init("stopwords.txt");
-        
-        // input text
-        String text = "this is good, and  (*Huh32 so it is.";
-        
-        // preprocess input text
-        String procText = Preprocessor.Simple(text);
-        
-        // tokenize input text
-        String[] words = procText.split(" ");
-        
-        // remove stopword
-//        words = Stopword.rmStopword(words);
-        
-        // get N-gram
-        NGram ngram = new NGram(2);
-        ngram.updateNGram(map, words);
-        
-        for (String key : map.keySet()) {
-            System.out.println(key);
+        try {
+            ChineseROUGE rouge = new ChineseROUGE();
+            
+            Result score = rouge.computeNGramScore("data/chinese/D132.M.100.D.A",
+                                "data/chinese/D132.M.100.D.C", "A", 1, 0.8);
+            System.out.println(score.getGramScoreP() + ", " +
+                               score.getGramScoreF());
+        } catch (IOException ex) {
+            Logger.getLogger(ChineseROUGE.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     

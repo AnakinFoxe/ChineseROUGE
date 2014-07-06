@@ -9,6 +9,7 @@ package edu.csupomona.nlp.tool;
 import edu.csupomona.nlp.util.MapUtil;
 import edu.csupomona.nlp.util.NGram;
 import edu.csupomona.nlp.util.Preprocessor;
+import edu.csupomona.nlp.util.Stopword;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -23,12 +24,21 @@ import java.util.logging.Logger;
  */
 public class EnglishROUGE {
     
-    private class HitScore {
+    public EnglishROUGE() {
+        try {
+            Stopword.init("stopwords_e.txt");
+        } catch (IOException ex) {
+            Logger.getLogger(EnglishROUGE.class.getName())
+                    .log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    protected class HitScore {
         int hit = 0;
         double score = 0;
     }
     
-    private HashMap<String, Integer> createNGram(Integer N, String path) 
+    protected HashMap<String, Integer> createNGram(Integer N, String path) 
             throws FileNotFoundException, IOException {
         // construct a n-gram processor
         NGram ngram = new NGram(N); 
@@ -45,6 +55,9 @@ public class EnglishROUGE {
             // tokenize input text
             String[] words = text.split(" ");
             
+            // remove stopwords
+            words = Stopword.rmStopword(words);
+            
             // update n-gram
             ngram.updateNGram(map, words);
         }
@@ -52,7 +65,7 @@ public class EnglishROUGE {
         return map;
     }
     
-    private HitScore ngramScore(HashMap<String, Integer> model_grams,
+    protected HitScore ngramScore(HashMap<String, Integer> model_grams,
             HashMap<String, Integer> peer_grams){
         int hit = 0;    // overall hits
         int h;      // hit for a n-gram
@@ -73,7 +86,7 @@ public class EnglishROUGE {
         return hit_score;
     }
     
-    private Result generateResult(HitScore hit_score, String scoreMode,
+    protected Result generateResult(HitScore hit_score, String scoreMode,
             double alpha, int model_count, int peer_count) {
         
         int totalGramHit = 0;
@@ -142,11 +155,12 @@ public class EnglishROUGE {
         EnglishROUGE rouge = new EnglishROUGE();
         try {
             Result score = rouge.computeNGramScore("data/english/D132.M.100.D.A",
-                                "data/english/D132.M.100.D.C", "A", 2, 0.8);
+                                "data/english/D132.M.100.D.C", "A", 1, 0.8);
             System.out.println(score.getGramScoreP() + ", " +
                                score.getGramScoreF());
         } catch (IOException ex) {
-            Logger.getLogger(EnglishROUGE.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(EnglishROUGE.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
     }
     
