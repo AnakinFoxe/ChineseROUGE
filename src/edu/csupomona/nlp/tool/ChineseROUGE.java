@@ -10,6 +10,7 @@ import edu.csupomona.nlp.util.ChineseSeg;
 import edu.csupomona.nlp.util.NGram;
 import edu.csupomona.nlp.util.Stopword;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -67,15 +68,22 @@ public class ChineseROUGE extends EnglishROUGE {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        ChineseROUGE rouge = new ChineseROUGE();
         try {
-            ChineseROUGE rouge = new ChineseROUGE();
-            
-            Result score = rouge.computeNGramScore("data/chinese/D132.M.100.D.A",
-                                "data/chinese/D132.M.100.D.C", "A", 1, 0.8);
-            System.out.println(score.getGramScoreP() + ", " +
-                               score.getGramScoreF());
+            String peerPath = "data/chinese/peer/";
+            String modelPath = "data/chinese/model/";
+            File[] files = new File(peerPath).listFiles();
+            for (File file : files) {
+                Result score = rouge.computeNGramScore(
+                                peerPath + file.getName(),
+                                modelPath, "A", 1, 0.8);
+                System.out.println(file.getName() + " : " + 
+                        score.getGramScoreP() + ", " +
+                        score.getGramScoreF());
+            }
         } catch (IOException ex) {
-            Logger.getLogger(ChineseROUGE.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(EnglishROUGE.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
     }
     

@@ -11,6 +11,7 @@ import edu.csupomona.nlp.util.NGram;
 import edu.csupomona.nlp.util.Preprocessor;
 import edu.csupomona.nlp.util.Stopword;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -86,34 +87,54 @@ public class EnglishROUGE {
         return hit_score;
     }
     
-    protected Result generateResult(HitScore hit_score, String scoreMode,
-            double alpha, int model_count, int peer_count) {
-        
+    public Result computeNGramScore(String peerPath, String modelPath,
+            String scoreMode, Integer N, double alpha) 
+            throws FileNotFoundException, IOException{
+        Result result = new Result();
+
+        // init variables
         int totalGramHit = 0;
         int totalGramCount = 0;
         int totalGramCountP = 0;
         double gramScoreBest = -1;
-        switch (scoreMode) {
-            case "A":
-                // average mode
-                totalGramHit += hit_score.hit;
-                totalGramCount += model_count;
-                totalGramCountP += peer_count;
-                break;
-            case "B":
-                // best match mode
-                if (hit_score.score > gramScoreBest) {
-                    gramScoreBest = hit_score.score;
-                    totalGramHit = hit_score.hit;
-                    totalGramCount = model_count;
-                    totalGramCountP = peer_count;
-                }   break;
-            default:
-                // default is average mode
-                totalGramHit += hit_score.hit;
-                totalGramCount += model_count;
-                totalGramCountP += peer_count;
-                break;
+        int model_count = 0;
+        int peer_count = 0;
+        
+        // read peer file and create n-gram maps
+        HashMap<String, Integer> peer_grams = createNGram(N, peerPath);
+        peer_count = MapUtil.sumHashMap(peer_grams);
+        
+        File[] files = new File(modelPath).listFiles(); // multiple model files
+        for (File file : files) {
+            // read model file and create n-gram maps
+            HashMap<String, Integer> model_grams = 
+                    createNGram(N, modelPath + file.getName());
+            model_count = MapUtil.sumHashMap(model_grams);
+
+            HitScore hit_score = ngramScore(model_grams, peer_grams);
+            
+            switch (scoreMode) {
+                case "A":
+                    // average mode
+                    totalGramHit += hit_score.hit;
+                    totalGramCount += model_count;
+                    totalGramCountP += peer_count;
+                    break;
+                case "B":
+                    // best match mode
+                    if (hit_score.score > gramScoreBest) {
+                        gramScoreBest = hit_score.score;
+                        totalGramHit = hit_score.hit;
+                        totalGramCount = model_count;
+                        totalGramCountP = peer_count;
+                    }   break;
+                default:
+                    // default is average mode
+                    totalGramHit += hit_score.hit;
+                    totalGramCount += model_count;
+                    totalGramCountP += peer_count;
+                    break;
+            }
         }
         
         // prepare score result for return
@@ -132,32 +153,21 @@ public class EnglishROUGE {
                 totalGramCountP, gramScoreP, gramScoreF);
     }
     
-    public Result computeNGramScore(String modelPath, String peerPath,
-            String scoreMode, Integer N, double alpha) 
-            throws FileNotFoundException, IOException{
-
-        // TODO: model could be multiple files
-        // read model file and create model n-gram maps
-        HashMap<String, Integer> model_grams = createNGram(N, modelPath);
-        
-        // read peer file and create model n-gram maps
-        HashMap<String, Integer> peer_grams = createNGram(N, peerPath);
-        
-        HitScore hit_score = ngramScore(model_grams, peer_grams);
-        
-        return generateResult(hit_score, scoreMode, alpha, 
-                MapUtil.sumHashMap(model_grams), 
-                MapUtil.sumHashMap(peer_grams));
-    }
-    
 
     public static void main(String[] args) {
         EnglishROUGE rouge = new EnglishROUGE();
         try {
-            Result score = rouge.computeNGramScore("data/english/D132.M.100.D.A",
-                                "data/english/D132.M.100.D.C", "A", 1, 0.8);
-            System.out.println(score.getGramScoreP() + ", " +
-                               score.getGramScoreF());
+            String peerPath = "data/english/peer/";
+            String modelPath = "data/english/model/";
+            File[] files = new File(peerPath).listFiles();
+            for (File file : files) {
+                Result score = rouge.computeNGramScore(
+                                peerPath + file.getName(),
+                                modelPath, "A", 1, 0.8);
+                System.out.println(file.getName() + " : " + 
+                        score.getGramScoreP() + ", " +
+                        score.getGramScoreF());
+            }
         } catch (IOException ex) {
             Logger.getLogger(EnglishROUGE.class.getName())
                     .log(Level.SEVERE, null, ex);

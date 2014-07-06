@@ -18,6 +18,15 @@ public class Result {
     private int totalGramCountP;    // total number of n-grams in peers
     private double gramScoreP;      // precision score
     private double gramScoreF;      // f1-measure score
+    
+    public Result() {
+        this.totalGramCount = 0;
+        this.totalGramHit = 0;
+        this.gramScore = 0;
+        this.totalGramCountP = 0;
+        this.gramScoreP = 0;
+        this.gramScoreF = 0;
+    }
 
     public Result(int totalGramCount, int totalGramHit, double gramScore, 
             int totalGramCountP, double gramScoreP, double gramScoreF) {
