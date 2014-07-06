@@ -20,29 +20,128 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * Java implemented ROUGE
+ * http://www.berouge.com/Pages/default.aspx
  * @author Xing
  */
 public class EnglishROUGE {
+    protected String metric;        
+    protected String scoreMode; 
+    protected double alpha;         
     
+    // preprocessing options
+    protected boolean rmStopword;
+    protected boolean useStemmer;
+    
+    // for n-gram ROUGE
+    protected Integer N;
+    
+    /*
+    * Construct an EnglishROUGE class with default values
+    */
     public EnglishROUGE() {
-        try {
-            Stopword.init("stopwords_e.txt");
-        } catch (IOException ex) {
-            Logger.getLogger(EnglishROUGE.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
+        this.metric = "N";
+        this.scoreMode = "A";
+        this.alpha = 0.8;
+        
+        this.rmStopword = false;
+        this.useStemmer = false;
+        
+        this.N = 1;
+    }
+
+    public String getMetric() {
+        return metric;
+    }
+
+    /*
+    * Which ROUGE metric to compute
+    *   "N": n-gram (supported)
+    *   "L": longest common subsequence
+    *   "W": weighted longest common subsequence 
+    *   "S": skip-bigram co-occurrence statistics
+    */
+    public void setMetric(String metric) {
+        this.metric = metric;
+    }
+
+    public String getScoreMode() {
+        return scoreMode;
+    }
+
+    /*
+    * "A": average mode (default), "B" best match mode
+    */
+    public void setScoreMode(String scoreMode) {
+        this.scoreMode = scoreMode;
+    }
+
+    public double getAlpha() {
+        return alpha;
+    }
+
+    /*
+    * Relative importance between recall and precision
+    *   close to 1: recall is more important
+    *   close to 0: precision is more important
+    */
+    public void setAlpha(double alpha) {
+        this.alpha = alpha;
+    }
+
+    public boolean isRmStopword() {
+        return rmStopword;
+    }
+
+    public void setRmStopword(boolean rmStopword) {
+        this.rmStopword = rmStopword;
+        
+        if (rmStopword)
+            try {
+                Stopword.init("stopwords_e.txt");
+            } catch (IOException ex) {
+                Logger.getLogger(EnglishROUGE.class.getName())
+                        .log(Level.SEVERE, null, ex);
+            }
+    }
+
+    public boolean isUseStemmer() {
+        return useStemmer;
+    }
+
+    public void setUseStemmer(boolean useStemmer) {
+        this.useStemmer = useStemmer;
+    }
+
+    public Integer getN() {
+        return N;
+    }
+
+    /*
+    * N of n-gram. E.g. 1 for unigram, 2 for bigram.
+    */
+    public void setN(Integer N) {
+        this.N = N;
     }
     
+    /*
+    * Nested class for saving hit counts and score
+    */
     protected class HitScore {
         int hit = 0;
         double score = 0;
     }
     
-    protected HashMap<String, Integer> createNGram(Integer N, String path) 
+    /*
+    * Create a HashMap to record n-gram information of a file
+    * @param N N of n-gram. E.g. 1 for unigram, 2 for bigram.
+    * @param path The path of the input file
+    * @return HashMap<String, Integer> HashMap stores n-gram information
+    */
+    protected HashMap<String, Integer> createNGram(String path) 
             throws FileNotFoundException, IOException {
         // construct a n-gram processor
-        NGram ngram = new NGram(N); 
+        NGram ngram = new NGram(this.N); 
         
         // read model file and create model n-gram maps
         FileReader fr = new FileReader(path);
@@ -66,10 +165,19 @@ public class EnglishROUGE {
         return map;
     }
     
-    protected HitScore ngramScore(HashMap<String, Integer> model_grams,
-            HashMap<String, Integer> peer_grams){
+    /*
+    * Calculate the score for n-gram ROUGE
+    * Please refer to "Rouge: A package for automatic evaluation of summaries"
+    * @param model_grams HashMap of n-gram for model file (reference)
+    * @param peer_grams HashMap of n-gram for peer file (target)
+    * @return HitScore Hit count and score
+    */
+    protected HitScore ngramScore(HashMap<String, Integer> peer_grams,
+            HashMap<String, Integer> model_grams){
         int hit = 0;    // overall hits
         int h;      // hit for a n-gram
+        
+        // get the overall hits
         for (String key : model_grams.keySet()) {
             h = 0;
             if (peer_grams.containsKey(key))
@@ -78,20 +186,26 @@ public class EnglishROUGE {
             hit += h;
         }
         
-         HitScore hit_score = new HitScore();
+        HitScore hit_score = new HitScore();
         int sum = MapUtil.sumHashMap(model_grams);
         if (sum != 0)
-            hit_score.score = (double)hit / sum;
+            hit_score.score = (double)hit / sum;    // score
         hit_score.hit = hit;
        
         return hit_score;
     }
     
-    public Result computeNGramScore(String peerPath, String modelPath,
-            String scoreMode, Integer N, double alpha) 
-            throws FileNotFoundException, IOException{
-        Result result = new Result();
+    /*
+    * Compute the n-gram ROUGE score
+    * @param peerPath The path to the peer file (include the file name) 
+    * @param modelPath The path contains model files (exclude the file names)
 
+    *              (close to 1: recall is more important,
+    *               close to 0: precision is more important)
+    * @return Result Result class that contains precision, F1 scores.
+    */
+    public Result computeNGramScore(String peerPath, String modelPath) 
+            throws FileNotFoundException, IOException{
         // init variables
         int totalGramHit = 0;
         int totalGramCount = 0;
@@ -101,19 +215,19 @@ public class EnglishROUGE {
         int peer_count = 0;
         
         // read peer file and create n-gram maps
-        HashMap<String, Integer> peer_grams = createNGram(N, peerPath);
+        HashMap<String, Integer> peer_grams = createNGram(peerPath);
         peer_count = MapUtil.sumHashMap(peer_grams);
         
         File[] files = new File(modelPath).listFiles(); // multiple model files
         for (File file : files) {
             // read model file and create n-gram maps
             HashMap<String, Integer> model_grams = 
-                    createNGram(N, modelPath + file.getName());
+                    createNGram(modelPath + file.getName());
             model_count = MapUtil.sumHashMap(model_grams);
 
-            HitScore hit_score = ngramScore(model_grams, peer_grams);
+            HitScore hit_score = ngramScore(peer_grams, model_grams);
             
-            switch (scoreMode) {
+            switch (this.scoreMode) {
                 case "A":
                     // average mode
                     totalGramHit += hit_score.hit;
@@ -138,7 +252,7 @@ public class EnglishROUGE {
         }
         
         // prepare score result for return
-        double gramScore = 0;
+        double gramScore = 0;   
         double gramScoreP = 0;  // precision score
         double gramScoreF = 0;  // f-measure
         if (totalGramCount != 0)
@@ -156,6 +270,9 @@ public class EnglishROUGE {
 
     public static void main(String[] args) {
         EnglishROUGE rouge = new EnglishROUGE();
+        rouge.setRmStopword(true);
+        rouge.setN(1);
+        
         try {
             String peerPath = "data/english/peer/";
             String modelPath = "data/english/model/";
@@ -163,7 +280,7 @@ public class EnglishROUGE {
             for (File file : files) {
                 Result score = rouge.computeNGramScore(
                                 peerPath + file.getName(),
-                                modelPath, "A", 1, 0.8);
+                                modelPath);
                 System.out.println(file.getName() + " : " + 
                         score.getGramScoreP() + ", " +
                         score.getGramScoreF());

@@ -20,29 +20,71 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * 
+ * Java implemented ROUGE for Chinese
  * @author Xing
  */
 public class ChineseROUGE extends EnglishROUGE {
+    // for segmentation
+    private String segMode; // segmentation mode
+    private ChineseSeg cs;
     
-    ChineseSeg cs;
-    
+    /*
+    * Construct an ChineseROUGE class with default values
+    */
     public ChineseROUGE() {
-        cs = new ChineseSeg();
+        this.segMode = "C";
+        this.cs = new ChineseSeg();
         
-        try {
-            Stopword.init("stopwords_c.txt");
-        } catch (IOException ex) {
-            Logger.getLogger(ChineseROUGE.class.getName())
-                    .log(Level.SEVERE, null, ex);
-        }
+        this.metric = "N";
+        this.scoreMode = "A";
+        this.alpha = 0.8;
+        
+        this.rmStopword = false;
+        this.useStemmer = false;
+        
+        this.N = 1;
+    }
+
+    public String getSegMode() {
+        return segMode;
+    }
+
+    /*
+    * Segmentation mode
+    *   "C": complex mode (default)
+    *   "S": simple mode
+    *   "M": max word mode
+    */
+    public void setSegMode(String segMode) {
+        this.segMode = segMode;
+    }
+
+    public boolean isRmStopword() {
+        return rmStopword;
+    }
+
+    public void setRmStopword(boolean rmStopword) {
+        this.rmStopword = rmStopword;
+        
+        if (rmStopword)
+            try {
+                Stopword.init("stopwords_c.txt");
+            } catch (IOException ex) {
+                Logger.getLogger(EnglishROUGE.class.getName())
+                        .log(Level.SEVERE, null, ex);
+            }
     }
     
+    /*
+    * Create a HashMap to record n-gram information of a file
+    * @param path The path of the input file
+    * @return HashMap<String, Integer> HashMap stores n-gram information
+    */
     @Override
-    protected HashMap<String, Integer> createNGram(Integer N, String path) 
+    protected HashMap<String, Integer> createNGram(String path) 
             throws FileNotFoundException, IOException {
         // construct a n-gram processor
-        NGram ngram = new NGram(N); 
+        NGram ngram = new NGram(this.N); 
         
         // read model file and create model n-gram maps
         FileReader fr = new FileReader(path);
@@ -52,7 +94,7 @@ public class ChineseROUGE extends EnglishROUGE {
         List<String> words;
         while ((text = br.readLine()) != null) {           
             // tokenize input text
-            words = cs.toMMsegWords(text, "C");
+            words = cs.toMMsegWords(text, this.segMode);
             
             // remove stopwords
             words = Stopword.rmStopword(words);
@@ -69,6 +111,8 @@ public class ChineseROUGE extends EnglishROUGE {
      */
     public static void main(String[] args) {
         ChineseROUGE rouge = new ChineseROUGE();
+        rouge.setRmStopword(true);
+        
         try {
             String peerPath = "data/chinese/peer/";
             String modelPath = "data/chinese/model/";
@@ -76,7 +120,7 @@ public class ChineseROUGE extends EnglishROUGE {
             for (File file : files) {
                 Result score = rouge.computeNGramScore(
                                 peerPath + file.getName(),
-                                modelPath, "A", 1, 0.8);
+                                modelPath);
                 System.out.println(file.getName() + " : " + 
                         score.getGramScoreP() + ", " +
                         score.getGramScoreF());
