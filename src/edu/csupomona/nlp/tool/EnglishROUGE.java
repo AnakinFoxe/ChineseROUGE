@@ -73,19 +73,8 @@ public class EnglishROUGE {
         return hit_score;
     }
     
-    
-    public double computeNGramScore(String modelPath, String peerPath,
-            String scoreMode, Integer N, double alpha) 
-            throws FileNotFoundException, IOException{
-
-        // TODO: model could be multiple files
-        // read model file and create model n-gram maps
-        HashMap<String, Integer> model_grams = createNGram(N, modelPath);
-        
-        // read peer file and create model n-gram maps
-        HashMap<String, Integer> peer_grams = createNGram(N, peerPath);
-        
-        HitScore hit_score = ngramScore(model_grams, peer_grams);
+    private Result generateResult(HitScore hit_score, String scoreMode,
+            double alpha, int model_count, int peer_count) {
         
         int totalGramHit = 0;
         int totalGramCount = 0;
@@ -95,22 +84,22 @@ public class EnglishROUGE {
             case "A":
                 // average mode
                 totalGramHit += hit_score.hit;
-                totalGramCount += MapUtil.sumHashMap(model_grams);
-                totalGramCountP += MapUtil.sumHashMap(peer_grams);
+                totalGramCount += model_count;
+                totalGramCountP += peer_count;
                 break;
             case "B":
                 // best match mode
                 if (hit_score.score > gramScoreBest) {
                     gramScoreBest = hit_score.score;
                     totalGramHit = hit_score.hit;
-                    totalGramCount = MapUtil.sumHashMap(model_grams);
-                    totalGramCountP = MapUtil.sumHashMap(peer_grams);
+                    totalGramCount = model_count;
+                    totalGramCountP = peer_count;
                 }   break;
             default:
                 // default is average mode
                 totalGramHit += hit_score.hit;
-                totalGramCount += MapUtil.sumHashMap(model_grams);
-                totalGramCountP += MapUtil.sumHashMap(peer_grams);
+                totalGramCount += model_count;
+                totalGramCountP += peer_count;
                 break;
         }
         
@@ -126,17 +115,36 @@ public class EnglishROUGE {
             gramScoreF = (gramScoreP*gramScore) / 
                     ((1-alpha)*gramScoreP+alpha*gramScore);
         
-        return gramScoreP;
+        return new Result(totalGramCount, totalGramHit, gramScore, 
+                totalGramCountP, gramScoreP, gramScoreF);
     }
     
+    public Result computeNGramScore(String modelPath, String peerPath,
+            String scoreMode, Integer N, double alpha) 
+            throws FileNotFoundException, IOException{
+
+        // TODO: model could be multiple files
+        // read model file and create model n-gram maps
+        HashMap<String, Integer> model_grams = createNGram(N, modelPath);
+        
+        // read peer file and create model n-gram maps
+        HashMap<String, Integer> peer_grams = createNGram(N, peerPath);
+        
+        HitScore hit_score = ngramScore(model_grams, peer_grams);
+        
+        return generateResult(hit_score, scoreMode, alpha, 
+                MapUtil.sumHashMap(model_grams), 
+                MapUtil.sumHashMap(peer_grams));
+    }
     
-    
+
     public static void main(String[] args) {
         EnglishROUGE rouge = new EnglishROUGE();
         try {
-            double score = rouge.computeNGramScore("data/english/D132.M.100.D.A",
-                                "data/english/D132.M.100.D.B", "A", 2, 0.5);
-            System.out.println(score);
+            Result score = rouge.computeNGramScore("data/english/D132.M.100.D.A",
+                                "data/english/D132.M.100.D.C", "A", 2, 0.8);
+            System.out.println(score.getGramScoreP() + ", " +
+                               score.getGramScoreF());
         } catch (IOException ex) {
             Logger.getLogger(EnglishROUGE.class.getName()).log(Level.SEVERE, null, ex);
         }
