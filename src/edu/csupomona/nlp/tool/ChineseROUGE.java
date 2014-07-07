@@ -67,17 +67,12 @@ public class ChineseROUGE extends EnglishROUGE {
         this.rmStopword = rmStopword;
         
         if (rmStopword)
-            try {
-                Stopword.init("stopwords_c.txt");
-            } catch (IOException ex) {
-                Logger.getLogger(EnglishROUGE.class.getName())
-                        .log(Level.SEVERE, null, ex);
-            }
+            sw = new Stopword("C");
     }
     
     /*
     * Create a HashMap to record n-gram information of a file
-    * @param path The path of the input file
+    * @param String The path of the input file
     * @return HashMap<String, Integer> HashMap stores n-gram information
     */
     @Override
@@ -97,7 +92,8 @@ public class ChineseROUGE extends EnglishROUGE {
             words = cs.toMMsegWords(text, this.segMode);
             
             // remove stopwords
-            words = Stopword.rmStopword(words);
+            if (this.rmStopword)
+                words = sw.rmStopword(words);
             
             // update n-gram
             ngram.updateNGram(map, words);

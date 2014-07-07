@@ -32,6 +32,7 @@ public class EnglishROUGE {
     // preprocessing options
     protected boolean rmStopword;
     protected boolean useStemmer;
+    protected Stopword sw;
     
     // for n-gram ROUGE
     protected Integer N;
@@ -97,12 +98,7 @@ public class EnglishROUGE {
         this.rmStopword = rmStopword;
         
         if (rmStopword)
-            try {
-                Stopword.init("stopwords_e.txt");
-            } catch (IOException ex) {
-                Logger.getLogger(EnglishROUGE.class.getName())
-                        .log(Level.SEVERE, null, ex);
-            }
+            sw = new Stopword("E");
     }
 
     public boolean isUseStemmer() {
@@ -134,8 +130,7 @@ public class EnglishROUGE {
     
     /*
     * Create a HashMap to record n-gram information of a file
-    * @param N N of n-gram. E.g. 1 for unigram, 2 for bigram.
-    * @param path The path of the input file
+    * @param String The path of the input file
     * @return HashMap<String, Integer> HashMap stores n-gram information
     */
     protected HashMap<String, Integer> createNGram(String path) 
@@ -156,7 +151,10 @@ public class EnglishROUGE {
             String[] words = text.split(" ");
             
             // remove stopwords
-            words = Stopword.rmStopword(words);
+            if (this.rmStopword)
+                words = sw.rmStopword(words);
+            
+            // TODO: stemmer
             
             // update n-gram
             ngram.updateNGram(map, words);
@@ -168,8 +166,8 @@ public class EnglishROUGE {
     /*
     * Calculate the score for n-gram ROUGE
     * Please refer to "Rouge: A package for automatic evaluation of summaries"
-    * @param model_grams HashMap of n-gram for model file (reference)
-    * @param peer_grams HashMap of n-gram for peer file (target)
+    * @param HashMap<String, Integer> n-gram for model file (reference)
+    * @param HashMap<String, Integer> n-gram for peer file (target)
     * @return HitScore Hit count and score
     */
     protected HitScore ngramScore(HashMap<String, Integer> peer_grams,
@@ -197,11 +195,8 @@ public class EnglishROUGE {
     
     /*
     * Compute the n-gram ROUGE score
-    * @param peerPath The path to the peer file (include the file name) 
-    * @param modelPath The path contains model files (exclude the file names)
-
-    *              (close to 1: recall is more important,
-    *               close to 0: precision is more important)
+    * @param String The path to the peer file (include the file name) 
+    * @param String The path contains model files (exclude the file names)
     * @return Result Result class that contains precision, F1 scores.
     */
     public Result computeNGramScore(String peerPath, String modelPath) 
