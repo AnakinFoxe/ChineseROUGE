@@ -7,7 +7,7 @@
 package edu.csupomona.nlp.tool;
 
 /**
- *
+ * Result class containing counts, precision and f1 scores
  * @author Xing
  */
 public class Result {

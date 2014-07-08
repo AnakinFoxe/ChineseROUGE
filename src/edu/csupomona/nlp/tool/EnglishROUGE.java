@@ -37,7 +37,7 @@ public class EnglishROUGE {
     // for n-gram ROUGE
     protected Integer N;
     
-    /*
+    /**
     * Construct an EnglishROUGE class with default values
     */
     public EnglishROUGE() {
@@ -55,12 +55,14 @@ public class EnglishROUGE {
         return metric;
     }
 
-    /*
+    /**
     * Which ROUGE metric to compute
-    *   "N": n-gram (supported)
-    *   "L": longest common subsequence
-    *   "W": weighted longest common subsequence 
-    *   "S": skip-bigram co-occurrence statistics
+    * @param metric    ROUGE metric.
+    *                   "N": n-gram (supported),
+    *                   "L": longest common subsequence,
+    *                   "W": weighted longest common subsequence,
+    *                   "S": skip-bigram co-occurrence statistics
+    * 
     */
     public void setMetric(String metric) {
         this.metric = metric;
@@ -70,8 +72,9 @@ public class EnglishROUGE {
         return scoreMode;
     }
 
-    /*
-    * "A": average mode (default), "B" best match mode
+    /**
+     * Set scoring mode 
+     * @param scoreMode "A": average mode (default), "B" best match mode
     */
     public void setScoreMode(String scoreMode) {
         this.scoreMode = scoreMode;
@@ -81,11 +84,11 @@ public class EnglishROUGE {
         return alpha;
     }
 
-    /*
-    * Relative importance between recall and precision
-    *   close to 1: recall is more important
-    *   close to 0: precision is more important
-    */
+    /**
+     * Relative importance between recall and precision
+     * @param alpha    Close to 1: recall is more important,
+     *                  Close to 0: precision is more important
+     */
     public void setAlpha(double alpha) {
         this.alpha = alpha;
     }
@@ -94,6 +97,10 @@ public class EnglishROUGE {
         return rmStopword;
     }
 
+    /**
+     * Remove stopwords or not
+     * @param rmStopword    True: remove stopwords, False: not to remove
+     */
     public void setRmStopword(boolean rmStopword) {
         this.rmStopword = rmStopword;
         
@@ -105,6 +112,10 @@ public class EnglishROUGE {
         return useStemmer;
     }
 
+    /**
+     * Use stemmer or not
+     * @param useStemmer    True: use stemmer, False: not to use
+     */
     public void setUseStemmer(boolean useStemmer) {
         this.useStemmer = useStemmer;
     }
@@ -113,26 +124,29 @@ public class EnglishROUGE {
         return N;
     }
 
-    /*
-    * N of n-gram. E.g. 1 for unigram, 2 for bigram.
-    */
+    /**
+     * N of n-gram. 
+     * @param N     1 for unigram, 2 for bigram, etc.
+     */
     public void setN(Integer N) {
         this.N = N;
     }
     
-    /*
+    /**
     * Nested class for saving hit counts and score
     */
     protected class HitScore {
         int hit = 0;
         double score = 0;
     }
-    
-    /*
-    * Create a HashMap to record n-gram information of a file
-    * @param String The path of the input file
-    * @return HashMap<String, Integer> HashMap stores n-gram information
-    */
+
+    /**
+     * Create a HashMap to record n-gram information of a file
+     * @param path      The path of the input file
+     * @return          HashMap stores n-gram information
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     protected HashMap<String, Integer> createNGram(String path) 
             throws FileNotFoundException, IOException {
         // construct a n-gram processor
@@ -162,14 +176,15 @@ public class EnglishROUGE {
         
         return map;
     }
-    
-    /*
-    * Calculate the score for n-gram ROUGE
-    * Please refer to "Rouge: A package for automatic evaluation of summaries"
-    * @param HashMap<String, Integer> n-gram for model file (reference)
-    * @param HashMap<String, Integer> n-gram for peer file (target)
-    * @return HitScore Hit count and score
-    */
+
+    /**
+     * Calculate the score for n-gram ROUGE
+     * Please refer to 
+     *      "Rouge: A package for automatic evaluation of summaries"
+     * @param peer_grams        n-gram for model file (reference)
+     * @param model_grams       n-gram for peer file (target)
+     * @return                  Hit count and score
+     */
     protected HitScore ngramScore(HashMap<String, Integer> peer_grams,
             HashMap<String, Integer> model_grams){
         int hit = 0;    // overall hits
@@ -192,13 +207,16 @@ public class EnglishROUGE {
        
         return hit_score;
     }
-    
-    /*
-    * Compute the n-gram ROUGE score
-    * @param String The path to the peer file (include the file name) 
-    * @param String The path contains model files (exclude the file names)
-    * @return Result Result class that contains precision, F1 scores.
-    */
+
+
+    /**
+     * Compute the n-gram ROUGE score
+     * @param peerPath      The path to the peer file (include the file name) 
+     * @param modelPath     The path contains model files (exclude the file names)
+     * @return              Result class that contains precision, F1 scores.
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
     public Result computeNGramScore(String peerPath, String modelPath) 
             throws FileNotFoundException, IOException{
         // init variables
@@ -267,6 +285,7 @@ public class EnglishROUGE {
         EnglishROUGE rouge = new EnglishROUGE();
         rouge.setRmStopword(true);
         rouge.setN(1);
+        
         
         try {
             String peerPath = "data/english/peer/";

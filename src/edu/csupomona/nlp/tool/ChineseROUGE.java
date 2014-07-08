@@ -28,9 +28,9 @@ public class ChineseROUGE extends EnglishROUGE {
     private String segMode; // segmentation mode
     private ChineseSeg cs;
     
-    /*
-    * Construct an ChineseROUGE class with default values
-    */
+    /**
+     * Construct an ChineseROUGE class with default values
+     */
     public ChineseROUGE() {
         this.segMode = "C";
         this.cs = new ChineseSeg();
@@ -49,20 +49,23 @@ public class ChineseROUGE extends EnglishROUGE {
         return segMode;
     }
 
-    /*
-    * Segmentation mode
-    *   "C": complex mode (default)
-    *   "S": simple mode
-    *   "M": max word mode
+    /**
+     * Set the segmentation mode 
+     * @param segMode   Segmentation mode.
+     *                  "C": complex mode (default),
+     *                  "S": simple mode,
+     *                  "M": max word mode
     */
     public void setSegMode(String segMode) {
         this.segMode = segMode;
     }
 
+    @Override
     public boolean isRmStopword() {
         return rmStopword;
     }
 
+    @Override
     public void setRmStopword(boolean rmStopword) {
         this.rmStopword = rmStopword;
         
@@ -70,10 +73,12 @@ public class ChineseROUGE extends EnglishROUGE {
             sw = new Stopword("C");
     }
     
-    /*
-    * Create a HashMap to record n-gram information of a file
-    * @param String The path of the input file
-    * @return HashMap<String, Integer> HashMap stores n-gram information
+    /**
+     * Create a HashMap to record n-gram information of a file
+     * @param path       The path of the input file
+     * @return           HashMap stores n-gram information
+     * @throws FileNotFoundException
+     * @throws IOException 
     */
     @Override
     protected HashMap<String, Integer> createNGram(String path) 
