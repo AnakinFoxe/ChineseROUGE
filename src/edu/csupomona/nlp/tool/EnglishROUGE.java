@@ -159,7 +159,7 @@ public class EnglishROUGE {
         String text;
         while ((text = br.readLine()) != null) {
             // preprocess text
-            text = Preprocessor.Simple(text);
+            text = Preprocessor.simple(text);
             
             // tokenize input text
             String[] words = text.split(" ");
@@ -224,8 +224,8 @@ public class EnglishROUGE {
         int totalGramCount = 0;
         int totalGramCountP = 0;
         double gramScoreBest = -1;
-        int model_count = 0;
-        int peer_count = 0;
+        int model_count;
+        int peer_count;
         
         // read peer file and create n-gram maps
         HashMap<String, Integer> peer_grams = createNGram(peerPath);
