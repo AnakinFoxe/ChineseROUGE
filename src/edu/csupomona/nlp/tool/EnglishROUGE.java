@@ -135,7 +135,7 @@ public class EnglishROUGE {
     /**
     * Nested class for saving hit counts and score
     */
-    protected class HitScore {
+    private class HitScore {
         int hit = 0;
         double score = 0;
     }
@@ -185,7 +185,7 @@ public class EnglishROUGE {
      * @param model_grams       n-gram for peer file (target)
      * @return                  Hit count and score
      */
-    protected HitScore ngramScore(HashMap<String, Integer> peer_grams,
+    private HitScore ngramScore(HashMap<String, Integer> peer_grams,
             HashMap<String, Integer> model_grams){
         int hit = 0;    // overall hits
         int h;      // hit for a n-gram
