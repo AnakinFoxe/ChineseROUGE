@@ -105,7 +105,7 @@ public class EnglishROUGE {
         this.rmStopword = rmStopword;
         
         if (rmStopword)
-            sw = new Stopword("E");
+            sw = new Stopword("en");
     }
 
     public boolean isUseStemmer() {

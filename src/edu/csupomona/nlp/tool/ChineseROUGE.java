@@ -70,7 +70,7 @@ public class ChineseROUGE extends EnglishROUGE {
         this.rmStopword = rmStopword;
         
         if (rmStopword)
-            sw = new Stopword("C");
+            sw = new Stopword("zh_CN");
     }
     
     /**
