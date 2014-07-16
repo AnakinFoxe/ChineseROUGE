@@ -24,3 +24,8 @@ project-root-directory/
 + build.xml
 /build/
 /dist/
+/data/
+/nbproject/
+/build.xml
+/manifest.mf
+/lib/

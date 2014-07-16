@@ -241,12 +241,6 @@ public class EnglishROUGE {
             HitScore hit_score = ngramScore(peer_grams, model_grams);
             
             switch (this.scoreMode) {
-                case "A":
-                    // average mode
-                    totalGramHit += hit_score.hit;
-                    totalGramCount += model_count;
-                    totalGramCountP += peer_count;
-                    break;
                 case "B":
                     // best match mode
                     if (hit_score.score > gramScoreBest) {
@@ -255,6 +249,8 @@ public class EnglishROUGE {
                         totalGramCount = model_count;
                         totalGramCountP = peer_count;
                     }   break;
+                case "A":
+                    // average mode
                 default:
                     // default is average mode
                     totalGramHit += hit_score.hit;
