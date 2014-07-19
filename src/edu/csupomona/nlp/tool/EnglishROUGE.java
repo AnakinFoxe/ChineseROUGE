@@ -15,7 +15,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -123,28 +126,51 @@ public class EnglishROUGE {
         int hit = 0;
         double score = 0;
     }
-
+    
+    
     /**
-     * Create a HashMap to record n-gram information of a file
-     * @param N         N of n-gram
-     * @param path      The path of the input file
-     * @return          HashMap stores n-gram information
-     * @throws FileNotFoundException
-     * @throws IOException
+     * Preprocess the input text to remove/replace undesired symbols
+     * @param text      Input string text
+     * @return          Processed string text
      */
-    protected HashMap<String, Integer> createNGram(Integer N, String path) 
+    protected String preprocess(String text) {
+        return Preprocessor.simple(text);
+    }
+    
+    /**
+     * Tokenize the input text into words
+     * @param text      Input string text
+     * @return          List of words
+     */
+    protected List<String> tokenize(String text) {
+        return new ArrayList<>(Arrays.asList(text.split(" ")));
+    }
+     
+    /**
+     * Read file and extract words from the file restricted by the 
+     * length limit or byte limit.
+     * @param lengthLimit   Limit in number of words to be extracted
+     * @param byteLimit     Limit in number of bytes to be extracted
+     * @param path          Path to the file
+     * @return              List of words extracted from the file
+     * @throws FileNotFoundException
+     * @throws IOException 
+     */
+    private List<String> readText(Integer lengthLimit, Integer byteLimit, 
+            String path) 
             throws FileNotFoundException, IOException {
-        // read model file and create model n-gram maps
+        List<String> tokenizedText = new ArrayList<>();
         FileReader fr = new FileReader(path);
         BufferedReader br = new BufferedReader(fr);
-        HashMap<String, Integer> map = new HashMap<>();
         String text;
+        Integer usedLengthLimit = 0;
+        Integer usedByteLimit = 0;
         while ((text = br.readLine()) != null) {
             // preprocess text
-            text = Preprocessor.simple(text);
+            text = preprocess(text);
             
             // tokenize input text
-            String[] words = text.split(" ");
+            List<String> words = tokenize(text);
             
             // remove stopwords
             if (this.rmStopword)
@@ -152,9 +178,59 @@ public class EnglishROUGE {
             
             // TODO: stemmer
             
-            // update n-gram
-            NGram.updateNGram(N, map, words);
+            // length or byte limit
+            if ((lengthLimit == 0) && (byteLimit == 0)) {
+                // no limit control, add everything
+                tokenizedText.addAll(words);
+            }
+            else if (lengthLimit != 0) {
+                // priority goes length limit control
+                if ((usedLengthLimit + words.size()) <= lengthLimit) 
+                    tokenizedText.addAll(words);
+                else {
+                    // reached limit
+                    tokenizedText.addAll(words.subList(0, 
+                            lengthLimit-usedLengthLimit));
+                    
+                    break;
+                }
+                    
+                usedLengthLimit += words.size();
+                
+            } else if (byteLimit != 0) {
+                // byte limit control
+                for (String word : words) {
+                    if ((usedByteLimit + word.length()) <= byteLimit) 
+                        tokenizedText.add(word);
+                    else {
+                        // reached limit
+                        // NOTE: current implementation may result in 
+                        // word truncation
+                        tokenizedText.add(word.substring(0, 
+                                byteLimit-usedByteLimit));
+                        break;
+                    }
+                    
+                    usedByteLimit += word.length();
+                }
+            }
         }
+        
+        return tokenizedText;
+    }
+
+    /**
+     * Create a HashMap to record n-gram information of a file
+     * @param N         N of n-gram
+     * @param words     List of words from a file
+     * @return          HashMap stores n-gram information
+     */
+    private HashMap<String, Integer> createNGram(Integer N, 
+            List<String> words) {
+        HashMap<String, Integer> map = new HashMap<>();
+        
+        // update n-gram info to the hashmap
+        NGram.updateNGram(N, map, words);
         
         return map;
     }
@@ -194,6 +270,8 @@ public class EnglishROUGE {
     /**
      * Compute the n-gram ROUGE score
      * @param N             N of n-gram
+     * @param lengthLimit   Length limit for ROUGE (in words)
+     * @param byteLimit     Byte limit for ROUGE (in bytes)
      * @param peerPath      The path to the peer file (include the file name) 
      * @param modelPath     The path contains model files (exclude the file names)
      * @return              Result class that contains precision, F1 scores.
@@ -201,6 +279,7 @@ public class EnglishROUGE {
      * @throws IOException
      */
     public Result computeNGramScore(Integer N, 
+            Integer lengthLimit, Integer byteLimit,
             String peerPath, String modelPath) 
             throws FileNotFoundException, IOException{
         // init variables
@@ -212,14 +291,15 @@ public class EnglishROUGE {
         int peer_count;
         
         // read peer file and create n-gram maps
-        HashMap<String, Integer> peer_grams = createNGram(N, peerPath);
+        List<String> words = readText(lengthLimit, byteLimit, peerPath);
+        HashMap<String, Integer> peer_grams = createNGram(N, words);
         peer_count = MapUtil.sumHashMap(peer_grams);
         
         File[] files = new File(modelPath).listFiles(); // multiple model files
         for (File file : files) {
             // read model file and create n-gram maps
-            HashMap<String, Integer> model_grams = 
-                    createNGram(N, modelPath + file.getName());
+            words = readText(lengthLimit, byteLimit,modelPath + file.getName());
+            HashMap<String, Integer> model_grams = createNGram(N, words);
             model_count = MapUtil.sumHashMap(model_grams);
 
             HitScore hit_score = ngramScore(peer_grams, model_grams);
@@ -271,7 +351,7 @@ public class EnglishROUGE {
             String modelPath = "data/english/model/";
             File[] files = new File(peerPath).listFiles();
             for (File file : files) {
-                Result score = rouge.computeNGramScore(1,
+                Result score = rouge.computeNGramScore(1, 0, 0,
                                 peerPath + file.getName(),
                                 modelPath);
                 System.out.println(file.getName() + " : " + 
