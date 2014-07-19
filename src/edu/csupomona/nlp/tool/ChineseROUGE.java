@@ -7,14 +7,10 @@
 package edu.csupomona.nlp.tool;
 
 import edu.csupomona.nlp.util.ChineseSeg;
-import edu.csupomona.nlp.util.NGram;
 import edu.csupomona.nlp.util.Stopword;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -71,37 +67,33 @@ public class ChineseROUGE extends EnglishROUGE {
             sw = new Stopword("zh_CN");
     }
     
+    
     /**
-     * Create a HashMap to record n-gram information of a file
-     * @param N         N of n-gram
-     * @param path      The path of the input file
-     * @return          HashMap stores n-gram information
-     * @throws FileNotFoundException
-     * @throws IOException 
-    */
+     * Preprocessing seems not necessary for Chinese
+     * @param text      Input string text
+     * @return          Processed string text
+     */
     @Override
-    protected HashMap<String, Integer> createNGram(Integer N, String path) 
-            throws FileNotFoundException, IOException {
-        // read model file and create model n-gram maps
-        FileReader fr = new FileReader(path);
-        BufferedReader br = new BufferedReader(fr);
-        HashMap<String, Integer> map = new HashMap<>();
-        String text;
-        List<String> words;
-        while ((text = br.readLine()) != null) {           
-            // tokenize input text
-            words = cs.toMMsegWords(text, this.segMode);
-            
-            // remove stopwords
-            if (this.rmStopword)
-                words = sw.rmStopword(words);
-            
-            // update n-gram
-            NGram.updateNGram(N, map, words);
-        }
-        
-        return map;
+    protected String preprocess(String text) {
+        return text;
     }
+    
+    /**
+     * Tokenize the input text into Chinese words
+     * @param text      Input string text
+     * @return          List of words
+     */
+    @Override
+    protected List<String> tokenize(String text) {
+        try {
+            return cs.toMMsegWords(text, this.segMode);
+        } catch (IOException ex) {
+            Logger.getLogger(ChineseROUGE.class.getName())
+                    .log(Level.SEVERE, null, ex);
+            return new ArrayList<>();
+        }
+    }
+    
 
     /**
      * @param args the command line arguments
@@ -115,7 +107,7 @@ public class ChineseROUGE extends EnglishROUGE {
             String modelPath = "data/chinese/model/";
             File[] files = new File(peerPath).listFiles();
             for (File file : files) {
-                Result score = rouge.computeNGramScore(1,
+                Result score = rouge.computeNGramScore(1, 0, 0,
                                 peerPath + file.getName(),
                                 modelPath);
                 System.out.println(file.getName() + " : " + 
