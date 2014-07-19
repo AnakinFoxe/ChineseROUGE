@@ -34,8 +34,6 @@ public class EnglishROUGE {
     protected boolean useStemmer;
     protected Stopword sw;
     
-    // for n-gram ROUGE
-    protected Integer N;
     
     /**
     * Construct an EnglishROUGE class with default values
@@ -47,8 +45,6 @@ public class EnglishROUGE {
         
         this.rmStopword = false;
         this.useStemmer = false;
-        
-        this.N = 1;
     }
 
     public String getMetric() {
@@ -119,18 +115,6 @@ public class EnglishROUGE {
     public void setUseStemmer(boolean useStemmer) {
         this.useStemmer = useStemmer;
     }
-
-    public Integer getN() {
-        return N;
-    }
-
-    /**
-     * N of n-gram. 
-     * @param N     1 for unigram, 2 for bigram, etc.
-     */
-    public void setN(Integer N) {
-        this.N = N;
-    }
     
     /**
     * Nested class for saving hit counts and score
@@ -142,16 +126,14 @@ public class EnglishROUGE {
 
     /**
      * Create a HashMap to record n-gram information of a file
+     * @param N         N of n-gram
      * @param path      The path of the input file
      * @return          HashMap stores n-gram information
      * @throws FileNotFoundException
      * @throws IOException
      */
-    protected HashMap<String, Integer> createNGram(String path) 
+    protected HashMap<String, Integer> createNGram(Integer N, String path) 
             throws FileNotFoundException, IOException {
-        // construct a n-gram processor
-        NGram ngram = new NGram(this.N); 
-        
         // read model file and create model n-gram maps
         FileReader fr = new FileReader(path);
         BufferedReader br = new BufferedReader(fr);
@@ -171,7 +153,7 @@ public class EnglishROUGE {
             // TODO: stemmer
             
             // update n-gram
-            ngram.updateNGram(map, words);
+            NGram.updateNGram(N, map, words);
         }
         
         return map;
@@ -211,13 +193,15 @@ public class EnglishROUGE {
 
     /**
      * Compute the n-gram ROUGE score
+     * @param N             N of n-gram
      * @param peerPath      The path to the peer file (include the file name) 
      * @param modelPath     The path contains model files (exclude the file names)
      * @return              Result class that contains precision, F1 scores.
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public Result computeNGramScore(String peerPath, String modelPath) 
+    public Result computeNGramScore(Integer N, 
+            String peerPath, String modelPath) 
             throws FileNotFoundException, IOException{
         // init variables
         int totalGramHit = 0;
@@ -228,14 +212,14 @@ public class EnglishROUGE {
         int peer_count;
         
         // read peer file and create n-gram maps
-        HashMap<String, Integer> peer_grams = createNGram(peerPath);
+        HashMap<String, Integer> peer_grams = createNGram(N, peerPath);
         peer_count = MapUtil.sumHashMap(peer_grams);
         
         File[] files = new File(modelPath).listFiles(); // multiple model files
         for (File file : files) {
             // read model file and create n-gram maps
             HashMap<String, Integer> model_grams = 
-                    createNGram(modelPath + file.getName());
+                    createNGram(N, modelPath + file.getName());
             model_count = MapUtil.sumHashMap(model_grams);
 
             HitScore hit_score = ngramScore(peer_grams, model_grams);
@@ -280,7 +264,6 @@ public class EnglishROUGE {
     public static void main(String[] args) {
         EnglishROUGE rouge = new EnglishROUGE();
         rouge.setRmStopword(true);
-        rouge.setN(1);
         
         
         try {
@@ -288,7 +271,7 @@ public class EnglishROUGE {
             String modelPath = "data/english/model/";
             File[] files = new File(peerPath).listFiles();
             for (File file : files) {
-                Result score = rouge.computeNGramScore(
+                Result score = rouge.computeNGramScore(1,
                                 peerPath + file.getName(),
                                 modelPath);
                 System.out.println(file.getName() + " : " + 

@@ -41,8 +41,6 @@ public class ChineseROUGE extends EnglishROUGE {
         
         this.rmStopword = false;
         this.useStemmer = false;
-        
-        this.N = 1;
     }
 
     public String getSegMode() {
@@ -75,17 +73,15 @@ public class ChineseROUGE extends EnglishROUGE {
     
     /**
      * Create a HashMap to record n-gram information of a file
-     * @param path       The path of the input file
-     * @return           HashMap stores n-gram information
+     * @param N         N of n-gram
+     * @param path      The path of the input file
+     * @return          HashMap stores n-gram information
      * @throws FileNotFoundException
      * @throws IOException 
     */
     @Override
-    protected HashMap<String, Integer> createNGram(String path) 
+    protected HashMap<String, Integer> createNGram(Integer N, String path) 
             throws FileNotFoundException, IOException {
-        // construct a n-gram processor
-        NGram ngram = new NGram(this.N); 
-        
         // read model file and create model n-gram maps
         FileReader fr = new FileReader(path);
         BufferedReader br = new BufferedReader(fr);
@@ -101,7 +97,7 @@ public class ChineseROUGE extends EnglishROUGE {
                 words = sw.rmStopword(words);
             
             // update n-gram
-            ngram.updateNGram(map, words);
+            NGram.updateNGram(N, map, words);
         }
         
         return map;
@@ -119,7 +115,7 @@ public class ChineseROUGE extends EnglishROUGE {
             String modelPath = "data/chinese/model/";
             File[] files = new File(peerPath).listFiles();
             for (File file : files) {
-                Result score = rouge.computeNGramScore(
+                Result score = rouge.computeNGramScore(1,
                                 peerPath + file.getName(),
                                 modelPath);
                 System.out.println(file.getName() + " : " + 
