@@ -71,7 +71,7 @@ public class ChineseROUGE extends EnglishROUGE {
     /**
      * Preprocessing seems not necessary for Chinese
      * @param text      Input string text
-     * @return          Processed string text
+     * @return          The same as input
      */
     @Override
     protected String preprocess(String text) {
@@ -92,6 +92,16 @@ public class ChineseROUGE extends EnglishROUGE {
                     .log(Level.SEVERE, null, ex);
             return new ArrayList<>();
         }
+    }
+    
+    /**
+     * Stemming seems not necessary for Chinese
+     * @param words     List of words
+     * @return          The same as input
+     */
+    @Override
+    protected List<String> stemming(List<String> words) {
+        return words;
     }
     
 

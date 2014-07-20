@@ -9,6 +9,7 @@ package edu.csupomona.nlp.tool;
 import edu.csupomona.nlp.util.MapUtil;
 import edu.csupomona.nlp.util.NGram;
 import edu.csupomona.nlp.util.Preprocessor;
+import edu.csupomona.nlp.util.Stemmer;
 import edu.csupomona.nlp.util.Stopword;
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,6 +37,7 @@ public class EnglishROUGE {
     protected boolean rmStopword;
     protected boolean useStemmer;
     protected Stopword sw;
+    protected Stemmer stem;
     
     
     /**
@@ -115,8 +117,11 @@ public class EnglishROUGE {
      * Use stemmer or not
      * @param useStemmer    True: use stemmer, False: not to use
      */
-    public void setUseStemmer(boolean useStemmer) {
+    protected void setUseStemmer(boolean useStemmer) {
         this.useStemmer = useStemmer;
+        
+        if (this.useStemmer == true)
+            stem = new Stemmer("en");
     }
     
     /**
@@ -144,6 +149,15 @@ public class EnglishROUGE {
      */
     protected List<String> tokenize(String text) {
         return new ArrayList<>(Arrays.asList(text.split(" ")));
+    }
+    
+    /**
+     * Stem input words using Snowball stemmer
+     * @param words     List of words
+     * @return          Stemmed list of words
+     */
+    protected List<String> stemming(List<String> words) {
+        return stem.stemWords(words);
     }
      
     /**
@@ -177,6 +191,8 @@ public class EnglishROUGE {
                 words = sw.rmStopword(words);
             
             // TODO: stemmer
+            if (this.useStemmer)
+                words = stemming(words);
             
             // length or byte limit
             if ((lengthLimit == 0) && (byteLimit == 0)) {
