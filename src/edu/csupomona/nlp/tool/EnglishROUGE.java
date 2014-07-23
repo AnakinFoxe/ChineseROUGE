@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -139,7 +140,7 @@ public class EnglishROUGE {
      * @return          Processed string text
      */
     protected String preprocess(String text) {
-        return Preprocessor.simple(text);
+        return Preprocessor.simple(text).toLowerCase(new Locale("en"));
     }
     
     /**
@@ -359,20 +360,28 @@ public class EnglishROUGE {
 
     public static void main(String[] args) {
         EnglishROUGE rouge = new EnglishROUGE();
-        rouge.setRmStopword(true);
+        rouge.setRmStopword(false);
+        rouge.setUseStemmer(false);
+        rouge.setAlpha(0.5);
+        rouge.setScoreMode("A");
         
         
         try {
-            String peerPath = "data/english/peer/";
-            String modelPath = "data/english/model/";
+            String peerPath = "data/testROUGE/baseline/";
+            String modelPath = "data/testROUGE/models/";
             File[] files = new File(peerPath).listFiles();
             for (File file : files) {
-                Result score = rouge.computeNGramScore(1, 0, 0,
+                Result score = rouge.computeNGramScore(4, 0, 0,
                                 peerPath + file.getName(),
                                 modelPath);
                 System.out.println(file.getName() + " : " + 
+                        score.getGramScore() + ", " +
                         score.getGramScoreP() + ", " +
                         score.getGramScoreF());
+                
+                System.out.println(score.getTotalGramCount() + ", " +
+                        score.getTotalGramCountP() + ", " +
+                        score.getTotalGramHit());
             }
         } catch (IOException ex) {
             Logger.getLogger(EnglishROUGE.class.getName())
