@@ -118,7 +118,7 @@ public class EnglishROUGE {
      * Use stemmer or not
      * @param useStemmer    True: use stemmer, False: not to use
      */
-    protected void setUseStemmer(boolean useStemmer) {
+    public void setUseStemmer(boolean useStemmer) {
         this.useStemmer = useStemmer;
         
         if (this.useStemmer == true)
@@ -367,11 +367,11 @@ public class EnglishROUGE {
         
         
         try {
-            String peerPath = "data/testROUGE/baseline/";
-            String modelPath = "data/testROUGE/models/";
+            String peerPath = "./data/evaluation/english/SubSum/d132d/";
+            String modelPath = "./data/evaluation/english/model.M.100/d132d/";
             File[] files = new File(peerPath).listFiles();
             for (File file : files) {
-                Result score = rouge.computeNGramScore(4, 0, 0,
+                Result score = rouge.computeNGramScore(1, 100, 0,
                                 peerPath + file.getName(),
                                 modelPath);
                 System.out.println(file.getName() + " : " + 

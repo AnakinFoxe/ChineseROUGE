@@ -110,14 +110,15 @@ public class ChineseROUGE extends EnglishROUGE {
      */
     public static void main(String[] args) {
         ChineseROUGE rouge = new ChineseROUGE();
-        rouge.setRmStopword(true);
+        rouge.setRmStopword(false);
+        rouge.setAlpha(0.5);
         
         try {
-            String peerPath = "data/chinese/peer/";
-            String modelPath = "data/chinese/model/";
+            String peerPath = "./data/evaluation/chinese/SubSum/d132d/";
+            String modelPath = "./data/evaluation/chinese/model.M.100/d132d/";
             File[] files = new File(peerPath).listFiles();
             for (File file : files) {
-                Result score = rouge.computeNGramScore(1, 0, 0,
+                Result score = rouge.computeNGramScore(1, 100, 0,
                                 peerPath + file.getName(),
                                 modelPath);
                 System.out.println(file.getName() + " : " + 
