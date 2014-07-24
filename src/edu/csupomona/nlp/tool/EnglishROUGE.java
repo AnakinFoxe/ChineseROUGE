@@ -367,8 +367,8 @@ public class EnglishROUGE {
         
         
         try {
-            String peerPath = "./data/evaluation/english/SubSum/d132d/";
-            String modelPath = "./data/evaluation/english/model.M.100/d132d/";
+            String peerPath = "./data/evaluation/english/SubSum/d133c/";
+            String modelPath = "./data/evaluation/english/model.M.100/d133c/";
             File[] files = new File(peerPath).listFiles();
             for (File file : files) {
                 Result score = rouge.computeNGramScore(1, 100, 0,
