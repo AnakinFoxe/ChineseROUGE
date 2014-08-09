@@ -22,7 +22,7 @@ import java.util.logging.Logger;
 public class ChineseROUGE extends EnglishROUGE {
     // for segmentation
     private String segMode; // segmentation mode
-    private ChineseSeg cs;
+    private final ChineseSeg cs;
     
     /**
      * Construct an ChineseROUGE class with default values

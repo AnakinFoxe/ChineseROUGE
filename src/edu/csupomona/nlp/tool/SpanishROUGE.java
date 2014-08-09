@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 import opennlp.tools.tokenize.SimpleTokenizer;
 
 /**
- *
+ * Java implemented ROUGE for Spanish
  * @author Xing
  */
 public class SpanishROUGE extends EnglishROUGE {
