@@ -191,7 +191,7 @@ public class EnglishROUGE {
             if (this.rmStopword)
                 words = sw.rmStopword(words);
             
-            // TODO: stemmer
+            // stemmer
             if (this.useStemmer)
                 words = stemming(words);
             
@@ -277,7 +277,7 @@ public class EnglishROUGE {
         HitScore hit_score = new HitScore();
         int sum = MapUtil.sumHashMap(model_grams);
         if (sum != 0)
-            hit_score.score = (double)hit / sum;    // score
+            hit_score.score = (double)hit / sum;    // score for best match mode
         hit_score.hit = hit;
        
         return hit_score;
@@ -342,7 +342,7 @@ public class EnglishROUGE {
         }
         
         // prepare score result for return
-        double gramScore = 0;   
+        double gramScore = 0;   // recall score
         double gramScoreP = 0;  // precision score
         double gramScoreF = 0;  // f-measure
         if (totalGramCount != 0)

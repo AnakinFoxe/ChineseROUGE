@@ -14,8 +14,8 @@ public class Result {
     
     private int totalGramCount;     // total number of n-grams in models
     private int totalGramHit;
-    private double gramScore;
     private int totalGramCountP;    // total number of n-grams in peers
+    private double gramScore;       // recall score
     private double gramScoreP;      // precision score
     private double gramScoreF;      // f1-measure score
     
