@@ -4,35 +4,48 @@
  * and open the template in the editor.
  */
 
-package edu.csupomona.nlp.tool.rouge;
+package edu.cpp.iipl.tool.rouge;
 
-import edu.csupomona.nlp.util.Stemmer;
-import edu.csupomona.nlp.util.Stopword;
+import edu.cpp.iipl.util.ChineseSeg;
+import edu.cpp.iipl.util.Stopword;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import opennlp.tools.tokenize.SimpleTokenizer;
 
 /**
- * Java implemented ROUGE for Spanish
+ * Java implemented ROUGE for Chinese
  * @author Xing
  */
-public class SpanishROUGE extends EnglishROUGE {
+public class ChineseROUGE extends EnglishROUGE {
+    // for segmentation
+    private String segMode; // segmentation mode
+    private final ChineseSeg cs;
     
-    private final SimpleTokenizer stk;    
-    
-     /**
-    * Construct an SpanishROUGE class with default values
-    */
-    public SpanishROUGE() {
+    /**
+     * Construct an ChineseROUGE class with default values
+     */
+    public ChineseROUGE() {
         super();
-        
-        stk = SimpleTokenizer.INSTANCE;
+        this.segMode = "C";
+        this.cs = new ChineseSeg();
+    }
+
+    public String getSegMode() {
+        return segMode;
+    }
+
+    /**
+     * Set the segmentation mode 
+     * @param segMode   Segmentation mode.
+     *                  "C": complex mode (default),
+     *                  "S": simple mode,
+     *                  "M": max word mode
+    */
+    public void setSegMode(String segMode) {
+        this.segMode = segMode;
     }
     
 
@@ -41,51 +54,58 @@ public class SpanishROUGE extends EnglishROUGE {
         this.rmStopword = rmStopword;
         
         if (rmStopword)
-            sw = new Stopword("es");
+            sw = new Stopword("zh_CN");
     }
     
-    
-    @Override
-    public void setUseStemmer(boolean useStemmer) {
-        this.useStemmer = useStemmer;
-        
-        if (this.useStemmer == true)
-            stem = new Stemmer("es");
-    }
     
     /**
-     * Preprocessing seems not necessary for Spanish
+     * Preprocessing seems not necessary for Chinese
      * @param text      Input string text
      * @return          The same as input
      */
     @Override
     protected String preprocess(String text) {
-        return text.toLowerCase(new Locale("es"));
+        return text;
     }
     
     /**
-     * Tokenize the input text into Spanish words
+     * Tokenize the input text into Chinese words
      * @param text      Input string text
      * @return          List of words
      */
     @Override
     protected List<String> tokenize(String text) {
-        return new ArrayList<>(Arrays.asList(stk.tokenize(text)));
+        try {
+            return cs.toMMsegWords(text, this.segMode);
+        } catch (IOException ex) {
+            Logger.getLogger(ChineseROUGE.class.getName())
+                    .log(Level.SEVERE, null, ex);
+            return new ArrayList<>();
+        }
     }
     
+    /**
+     * Stemming seems not necessary for Chinese
+     * @param words     List of words
+     * @return          The same as input
+     */
+    @Override
+    protected List<String> stemming(List<String> words) {
+        return words;
+    }
+    
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        SpanishROUGE rouge = new SpanishROUGE();
+        ChineseROUGE rouge = new ChineseROUGE();
         rouge.setRmStopword(false);
-        rouge.setUseStemmer(false);
         rouge.setAlpha(0.5);
-        rouge.setScoreMode("A");
         
         try {
-            String peerPath = "./data/evaluation/spanish/SubSum/d133c/";
-            String modelPath = "./data/evaluation/spanish/model.M.100/d133c/";
+            String peerPath = "./data/evaluation/chinese/SubSum/d132d/";
+            String modelPath = "./data/evaluation/chinese/model.M.100/d132d/";
             File[] files = new File(peerPath).listFiles();
             for (File file : files) {
                 Result score = rouge.computeNGramScore(1, 100, 0,
@@ -105,6 +125,7 @@ public class SpanishROUGE extends EnglishROUGE {
                     .log(Level.SEVERE, null, ex);
         }
     }
+    
     
     
 }

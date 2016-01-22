@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package edu.csupomona.nlp.tool.rouge;
+package edu.cpp.iipl.tool.rouge;
 
 /**
  * Result class containing counts, precision and f1 scores
